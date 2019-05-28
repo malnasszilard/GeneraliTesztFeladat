@@ -28,7 +28,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class UploadActivity extends AppCompatActivity implements FtpController.UploadListener {
+public class UploadActivity extends AppCompatActivity implements FtpController.UploadListener{
 
     private static final String TAG = UploadActivity.class.getSimpleName();
     FtpController ftpController = FtpController.getInstance();
@@ -176,17 +176,17 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),"Upload started",Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(),"Upload started",Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     @Override
-    public void onProgressChanged() {
+    public void onProgressChanged(final int percent) {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),"In progress",Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(),"In progress:"+ percent+ "%",Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -196,7 +196,7 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),"Upload finished",Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(),"Upload finished",Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -210,6 +210,7 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
             }
         });
     }
+
 
 
 }

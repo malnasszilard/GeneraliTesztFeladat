@@ -2,26 +2,24 @@ package com.app2gether.tesztfeladat.singleton;
 
 
 import android.os.AsyncTask;
-import android.os.Looper;
 import android.util.Log;
-
-import com.app2gether.ProgressInputStream;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
+import org.apache.commons.net.io.CopyStreamEvent;
+import org.apache.commons.net.io.CopyStreamListener;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Socket;
 
 public class FtpController {
 
-    private SharedPreferenceController sharedPreferenceController;
     private FTPClient ftpClient = null;
     private UploadListener listener;
     private boolean result = false;
     private ConnectionListener connectionListener;
+    private int percent = 0;
 
 
     public void setConnectionListener(ConnectionListener connectionListener) {
@@ -31,7 +29,7 @@ public class FtpController {
     public interface UploadListener {
         void startUpload();
 
-        void onProgressChanged();
+        void onProgressChanged(int percent);
 
         void onUploadFinished();
 
@@ -51,8 +49,7 @@ public class FtpController {
     }
 
 
-    public FtpController(SharedPreferenceController sharedPreferenceController) {
-        this.sharedPreferenceController = sharedPreferenceController;
+    private FtpController() {
     }
 
     private static FtpController ourInstance;
@@ -62,7 +59,9 @@ public class FtpController {
     }
 
     public static void init() {
-        ourInstance = new FtpController(SharedPreferenceController.getInstance());
+        if (ourInstance == null) {
+            ourInstance = new FtpController();
+        }
     }
 
 
@@ -80,8 +79,8 @@ public class FtpController {
         }
     }
 
-    private void disconnect()  {
-        if(ftpClient!=null){
+    private void disconnect() {
+        if (ftpClient != null) {
             try {
                 ftpClient.disconnect();
             } catch (IOException e) {
@@ -135,30 +134,31 @@ public class FtpController {
     }
 
     public void upload(final String name, final InputStream stream) {
+        setUploadStateListener();
+        percent = 0;
         final Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-               if(listener!=null){
-                   listener.startUpload();
-               }
+                if (listener != null) {
+                    listener.startUpload();
+                }
                 try {
                     BufferedInputStream buffIn = new BufferedInputStream(stream);
                     ftpClient.enterLocalPassiveMode();
-                    ProgressInputStream progressInput = new ProgressInputStream(
-                            buffIn);
-                    if(listener!=null){
-                        listener.onProgressChanged();
-                    }
-                    result = ftpClient.storeFile(name, progressInput);
+                    result = ftpClient.storeFile(name, buffIn);
+
                     if (listener != null) {
-                        if(result) {
+                       //todo listener.onProgressChanged();
+                    }
+                    if (listener != null) {
+                        if (result) {
                             listener.onUploadFinished();
-                        }else{
+                        } else {
                             listener.onError();
                         }
                     }
                 } catch (IOException e) {
-                    if(listener!=null){
+                    if (listener != null) {
                         listener.onError();
                     }
                     e.printStackTrace();
@@ -166,21 +166,33 @@ public class FtpController {
             }
 
         });
-
-        /*switch(thread.getState()) {
-            case NEW:
-                //Play voicefile
-               String s="start";
-                break;
-            case RUNNABLE:
-                //Stop MediaPlayer
-                s="stop";
-                break;
-        }*/
-
-
         thread.start();
 
+    }
+
+    private void setUploadStateListener() {
+        if (ftpClient != null) {
+            ftpClient.setCopyStreamListener(new CopyStreamListener() {
+                @Override
+                public void bytesTransferred(CopyStreamEvent event) {
+
+                }
+
+                @Override
+                public void bytesTransferred(long totalBytesTransferred, int bytesTransferred, long streamSize) {
+                    Log.d("Inputsteam", "totalBytesTransferred: " + totalBytesTransferred);
+                    if (listener != null){
+                        int percentFloat = (int) ((float) totalBytesTransferred / (float) streamSize  * 100);
+                        if (percent < percentFloat){
+                            listener.onProgressChanged(percent);
+                            percent = percentFloat;
+
+                        }
+                    }
+
+                }
+            });
+        }
     }
 
 }
