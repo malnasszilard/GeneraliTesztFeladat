@@ -21,7 +21,6 @@ import android.widget.Toast;
 import com.app2gether.tesztfeladat.R;
 import com.app2gether.tesztfeladat.singleton.FtpController;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 
@@ -29,7 +28,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class UploadActivity extends AppCompatActivity implements FtpController.UploadListener{
+public class UploadActivity extends AppCompatActivity implements FtpController.UploadListener {
 
     private static final String TAG = UploadActivity.class.getSimpleName();
     FtpController ftpController = FtpController.getInstance();
@@ -37,9 +36,10 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
     String displayName;
     @BindView(R.id.fileChooser)
     TextView fileChooser;
-    @BindView(R.id.progressBar)
-    ProgressBar progressBar;
+
     long fileSize;
+    @BindView(R.id.status)
+    TextView status;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -57,14 +57,13 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
             // todo check permisson - write, read
             case R.id.upload:
                 if (selectedFileUri != null) {
-                    progressBar.setVisibility(View.VISIBLE);
                     try {
                         InputStream stream = getContentResolver().openInputStream(selectedFileUri);
-                        ftpController.upload(displayName, stream,fileSize);
+                        ftpController.upload(displayName, stream, fileSize);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                }else{
+                } else {
                     AlertDialog.Builder alertDialog = new AlertDialog.Builder(
                             this);
                     alertDialog.setMessage("Kérlek válassz ki egy torrent fájlt feltöltés előtt");
@@ -135,7 +134,7 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
 
                                                     intent.setType("*/*");
                                                     intent.addCategory(Intent.CATEGORY_OPENABLE);
-                                                         try {
+                                                    try {
                                                         startActivityForResult(
                                                                 Intent.createChooser(intent, "Kérlek válasz egy torrent fájlt"),
                                                                 1);
@@ -165,7 +164,7 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
                         }
                     } else if (uriString.startsWith("file://")) {
                         displayName = file.getName();
-                        fileSize=file.length();
+                        fileSize = file.length();
                         fileChooser.setText(displayName);
                     }
                 }
@@ -180,7 +179,8 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),"A feltöltés elkezdődött.",Toast.LENGTH_SHORT).show();
+
+                status.setText("A feltöltés elkezdődött.");
             }
         });
     }
@@ -190,7 +190,8 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),"Feltöltés folyamatban."+ percent+ "%",Toast.LENGTH_SHORT).show();
+
+                status.setText("Feltöltés folyamatban." + percent + "%");
             }
         });
     }
@@ -200,7 +201,8 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),"A feltöltés sikeres.",Toast.LENGTH_SHORT).show();
+
+                status.setText("A feltöltés sikeres.");
             }
         });
     }
@@ -210,11 +212,11 @@ public class UploadActivity extends AppCompatActivity implements FtpController.U
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                Toast.makeText(getApplicationContext(),"Hiba történt. Kérjük próbálja újra.",Toast.LENGTH_LONG).show();
+
+                status.setText("Hiba történt. Kérjük próbálja újra.");
             }
         });
     }
-
 
 
 }
