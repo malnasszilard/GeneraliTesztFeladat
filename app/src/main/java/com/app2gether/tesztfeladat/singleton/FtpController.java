@@ -20,6 +20,7 @@ public class FtpController {
     private boolean result = false;
     private ConnectionListener connectionListener;
     private int percent = 0;
+    private long fileLength;
 
 
     public void setConnectionListener(ConnectionListener connectionListener) {
@@ -29,7 +30,7 @@ public class FtpController {
     public interface UploadListener {
         void startUpload();
 
-        void onProgressChanged(int percent);
+        void onProgressChanged(int lenght);
 
         void onUploadFinished();
 
@@ -133,9 +134,10 @@ public class FtpController {
         }
     }
 
-    public void upload(final String name, final InputStream stream) {
+    public void upload(final String name, final InputStream stream, long fileLength) {
         setUploadStateListener();
-        percent = 0;
+        percent=0;
+        this.fileLength=fileLength;
         final Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -148,7 +150,7 @@ public class FtpController {
                     result = ftpClient.storeFile(name, buffIn);
 
                     if (listener != null) {
-                       //todo listener.onProgressChanged();
+                            listener.onProgressChanged(percent);
                     }
                     if (listener != null) {
                         if (result) {
@@ -180,12 +182,13 @@ public class FtpController {
 
                 @Override
                 public void bytesTransferred(long totalBytesTransferred, int bytesTransferred, long streamSize) {
-                    Log.d("Inputsteam", "totalBytesTransferred: " + totalBytesTransferred);
                     if (listener != null){
-                        int percentFloat = (int) ((float) totalBytesTransferred / (float) streamSize  * 100);
+                        long lenght = (fileLength > 1) ? fileLength : streamSize;
+                        int percentFloat = (int) ((float) totalBytesTransferred / (float) lenght  * 100);
                         if (percent < percentFloat){
                             listener.onProgressChanged(percent);
                             percent = percentFloat;
+                            Log.d("Inputsteam", "totalBytesTransferred: " + totalBytesTransferred);
 
                         }
                     }
